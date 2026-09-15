@@ -37,4 +37,7 @@ API密钥只通过环境变量或本地 `.env` 文件读取，真实密钥不会
 - [个人项目方案](docs/project-proposal.md)
 - [需求说明V1](docs/requirements-v1.md)
 - [调研与访谈摘要](docs/research-notes.md)
+- [软件架构设计V1](docs/design/architecture-design-v1.md)
+- [数据与接口设计V1](docs/design/data-api-design-v1.md)
+- [界面与交互设计V1](docs/design/interface-design-v1.md)
 
