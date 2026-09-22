@@ -1,0 +1,23 @@
+{% load static %}
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}课程作业要求智能整理系统{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'app.css' %}">
+</head>
+<body>
+<header class="site-header">
+    <div class="container header-inner">
+        <a class="brand" href="{% url 'assignment_list' %}">课程作业要求智能整理系统</a>
+        <nav><a href="{% url 'assignment_list' %}">作业列表</a><a class="button" href="{% url 'assignment_create' %}">新建作业</a></nav>
+    </div>
+</header>
+<main class="container">
+    {% for message in messages %}<div class="message">{{ message }}</div>{% endfor %}
+    {% block content %}{% endblock %}
+</main>
+</body>
+</html>
+

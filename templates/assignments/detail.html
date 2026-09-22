@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block title %}{{ assignment.title }}{% endblock %}
+{% block content %}
+<a class="back" href="{% url 'assignment_list' %}">← 返回作业列表</a>
+<section class="detail-card">
+    <span class="course">{{ assignment.course_name }}</span><h1>{{ assignment.title }}</h1>
+    <dl><div><dt>截止时间</dt><dd>{{ assignment.deadline|date:'Y-m-d' }}</dd></div><div><dt>提交物</dt><dd>{{ assignment.deliverables|linebreaksbr }}</dd></div><div><dt>文件命名</dt><dd>{{ assignment.filename_rule|default:'未填写' }}</dd></div></dl>
+    <h2>任务步骤</h2><ol class="steps">{% for step in assignment.steps.all %}<li>{{ step.title }}</li>{% empty %}<li>暂无任务步骤</li>{% endfor %}</ol>
+    {% if assignment.source_text %}<h2>原始要求</h2><div class="source-text">{{ assignment.source_text|linebreaksbr }}</div>{% endif %}
+</section>
+{% endblock %}
+

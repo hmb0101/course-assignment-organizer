@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}作业列表{% endblock %}
+{% block content %}
+<section class="page-heading"><div><p class="eyebrow">基础功能版本</p><h1>我的课程作业</h1><p>集中查看截止时间、提交物和任务步骤。</p></div><a class="button primary" href="{% url 'assignment_create' %}">+ 新建作业</a></section>
+{% if assignments %}
+<div class="card-list">
+    {% for assignment in assignments %}
+    <article class="card">
+        <div><span class="course">{{ assignment.course_name }}</span><h2>{{ assignment.title }}</h2><p>截止时间：{{ assignment.deadline|date:'Y-m-d' }}</p><p>提交物：{{ assignment.deliverables|truncatechars:60 }}</p></div>
+        <div class="card-actions"><span>{{ assignment.steps.all|length }} 个步骤</span><a href="{% url 'assignment_detail' assignment.pk %}">查看详情 →</a></div>
+    </article>
+    {% endfor %}
+</div>
+{% else %}
+<section class="empty"><h2>还没有作业</h2><p>点击“新建作业”录入第一条课程任务。</p><a class="button primary" href="{% url 'assignment_create' %}">新建作业</a></section>
+{% endif %}
+{% endblock %}
+

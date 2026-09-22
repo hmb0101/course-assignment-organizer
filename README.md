@@ -4,7 +4,18 @@
 
 ## 当前阶段
 
-当前完成个人项目方案、需求说明V1和调研记录，尚未进入功能开发阶段。
+实验4已完成非AI基础业务版本：可以手工录入、保存并查看课程作业和任务步骤。通义千问接入保留到后续迭代。
+
+## 本地运行
+
+```powershell
+python -m pip install -r requirements.txt
+python manage.py migrate
+python manage.py seed_demo
+python manage.py runserver 127.0.0.1:8000
+```
+
+浏览器访问 `http://127.0.0.1:8000/`。
 
 ## 核心流程
 
