@@ -3,10 +3,10 @@
 {% block content %}
 <a class="back" href="{% url 'assignment_list' %}">← 返回作业列表</a>
 <section class="detail-card">
-    <span class="course">{{ assignment.course_name }}</span><h1>{{ assignment.title }}</h1>
+    <div class="detail-heading"><div><span class="course">{{ assignment.course_name }}</span><h1>{{ assignment.title }}</h1></div><a class="button" href="{% url 'assignment_edit' assignment.pk %}">编辑作业</a></div>
     <dl><div><dt>截止时间</dt><dd>{{ assignment.deadline|date:'Y-m-d' }}</dd></div><div><dt>提交物</dt><dd>{{ assignment.deliverables|linebreaksbr }}</dd></div><div><dt>文件命名</dt><dd>{{ assignment.filename_rule|default:'未填写' }}</dd></div></dl>
-    <h2>任务步骤</h2><ol class="steps">{% for step in assignment.steps.all %}<li>{{ step.title }}</li>{% empty %}<li>暂无任务步骤</li>{% endfor %}</ol>
+    <h2>任务步骤</h2><ol class="steps">{% for step in assignment.steps.all %}<li class="{% if step.completed %}completed{% endif %}"><form method="post" action="{% url 'step_toggle' step.pk %}">{% csrf_token %}<button class="check" type="submit" aria-label="切换完成状态">{% if step.completed %}✓{% else %}○{% endif %}</button></form><span>{{ step.title }}</span></li>{% empty %}<li>暂无任务步骤</li>{% endfor %}</ol>
     {% if assignment.source_text %}<h2>原始要求</h2><div class="source-text">{{ assignment.source_text|linebreaksbr }}</div>{% endif %}
+    <form method="post" action="{% url 'assignment_delete' assignment.pk %}" class="delete-form" onsubmit="return confirm('确定删除这条作业吗？');">{% csrf_token %}<button class="button danger" type="submit">删除作业</button></form>
 </section>
 {% endblock %}
-

@@ -1,0 +1,47 @@
+Creating test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...
+
+Found 9 test(s).
+Operations to perform:
+  Synchronize unmigrated apps: messages, staticfiles
+  Apply all migrations: admin, assignments, auth, contenttypes, sessions
+Synchronizing apps without migrations:
+  Creating tables...
+    Running deferred SQL...
+Running migrations:
+  Applying contenttypes.0001_initial... OK
+  Applying auth.0001_initial... OK
+  Applying admin.0001_initial... OK
+  Applying admin.0002_logentry_remove_auto_add... OK
+  Applying admin.0003_logentry_add_action_flag_choices... OK
+  Applying assignments.0001_initial... OK
+  Applying assignments.0002_assignment_unique_assignment_identity... OK
+  Applying contenttypes.0002_remove_content_type_name... OK
+  Applying auth.0002_alter_permission_name_max_length... OK
+  Applying auth.0003_alter_user_email_max_length... OK
+  Applying auth.0004_alter_user_username_opts... OK
+  Applying auth.0005_alter_user_last_login_null... OK
+  Applying auth.0006_require_contenttypes_0002... OK
+  Applying auth.0007_alter_validators_add_error_messages... OK
+  Applying auth.0008_alter_user_username_max_length... OK
+  Applying auth.0009_alter_user_last_name_max_length... OK
+  Applying auth.0010_alter_group_name_max_length... OK
+  Applying auth.0011_update_proxy_permissions... OK
+  Applying auth.0012_alter_user_first_name_max_length... OK
+test_create_assignment_and_steps (assignments.tests.AssignmentFlowTests.test_create_assignment_and_steps) ... ok
+test_delete_requires_post (assignments.tests.AssignmentFlowTests.test_delete_requires_post) ... ok
+test_duplicate_assignment_is_rejected (assignments.tests.AssignmentFlowTests.test_duplicate_assignment_is_rejected) ... ok
+test_edit_assignment_replaces_steps (assignments.tests.AssignmentFlowTests.test_edit_assignment_replaces_steps) ... ok
+test_empty_list_page_has_clear_prompt (assignments.tests.AssignmentFlowTests.test_empty_list_page_has_clear_prompt) ... ok
+test_missing_assignment_returns_404 (assignments.tests.AssignmentFlowTests.test_missing_assignment_returns_404) ... ok
+test_past_deadline_is_rejected (assignments.tests.AssignmentFlowTests.test_past_deadline_is_rejected) ... ok
+test_required_fields_show_validation_errors (assignments.tests.AssignmentFlowTests.test_required_fields_show_validation_errors) ... ok
+test_toggle_requires_post_and_changes_state (assignments.tests.AssignmentFlowTests.test_toggle_requires_post_and_changes_state) ... ok
+
+----------------------------------------------------------------------
+Ran 9 tests in 0.050s
+
+OK
+Destroying test database for alias 'default' ('file:memorydb_default?mode=memory&cache=shared')...
+
+  Applying sessions.0001_initial... OK
+System check identified no issues (0 silenced).

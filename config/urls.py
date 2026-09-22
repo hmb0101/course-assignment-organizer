@@ -7,3 +7,4 @@ urlpatterns = [
     path("", include("assignments.urls")),
 ]
 
+handler404 = "assignments.views.custom_404"

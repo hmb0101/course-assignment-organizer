@@ -4,7 +4,7 @@
 
 ## 当前阶段
 
-实验4已完成非AI基础业务版本：可以手工录入、保存并查看课程作业和任务步骤。通义千问接入保留到后续迭代。
+实验4已完成非AI基础业务闭环：可以手工录入、校验、保存、编辑、删除作业，并管理任务步骤的完成状态。通义千问接入保留到后续迭代。
 
 ## 本地运行
 
@@ -16,6 +16,19 @@ python manage.py runserver 127.0.0.1:8000
 ```
 
 浏览器访问 `http://127.0.0.1:8000/`。
+
+清空并恢复演示数据：
+
+```powershell
+python manage.py reset_demo
+python manage.py reset_demo --empty
+```
+
+执行自动化测试：
+
+```powershell
+python manage.py test
+```
 
 ## 核心流程
 

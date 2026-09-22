@@ -8,6 +8,8 @@ db.sqlite3
 logs/
 screenshots/
 .test-results/
+.edge-*/
+.chrome-*/
 .idea/
 .vscode/
 

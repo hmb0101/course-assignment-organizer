@@ -12,6 +12,12 @@ class Assignment(models.Model):
 
     class Meta:
         ordering = ["deadline", "id"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["course_name", "title", "deadline"],
+                name="unique_assignment_identity",
+            )
+        ]
 
     def __str__(self):
         return f"{self.course_name} - {self.title}"
@@ -28,4 +34,3 @@ class TaskStep(models.Model):
 
     def __str__(self):
         return self.title
-

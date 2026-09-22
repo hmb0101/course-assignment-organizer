@@ -1,10 +1,13 @@
+import os
 from pathlib import Path
 
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+LOG_DIR = BASE_DIR / "logs"
+LOG_DIR.mkdir(exist_ok=True)
 
 SECRET_KEY = "development-only-secret-key"
-DEBUG = True
+DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"
 ALLOWED_HOSTS = ["127.0.0.1", "localhost", "testserver"]
 
 INSTALLED_APPS = [
@@ -63,3 +66,17 @@ STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {"plain": {"format": "{asctime} {levelname} {message}", "style": "{"}},
+    "handlers": {
+        "file": {
+            "class": "logging.FileHandler",
+            "filename": LOG_DIR / "app.log",
+            "formatter": "plain",
+            "encoding": "utf-8",
+        }
+    },
+    "loggers": {"assignments": {"handlers": ["file"], "level": "INFO", "propagate": False}},
+}
