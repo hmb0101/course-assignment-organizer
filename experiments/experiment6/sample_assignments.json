@@ -1,0 +1,7 @@
+[
+  {"id":101,"course":"软件应用开发实践","title":"实验六：工具调用与Agent","deadline":"2026-10-28","is_submitted":false,"deliverables":"实验报告.pdf","filename_rule":"班级-学号-姓名-实验6.pdf","requirements":"记录工具接口、Agent循环、运行日志与测试结果。"},
+  {"id":102,"course":"软件设计模式","title":"设计模式练习","deadline":"2026-10-30","is_submitted":false,"deliverables":"设计模式练习.docx","filename_rule":"学号-姓名-设计模式练习.docx","requirements":"说明模式参与者并附可运行示例。"},
+  {"id":103,"course":"数据库课程","title":"数据库查询练习","deadline":"2026-11-05","is_submitted":false,"deliverables":"查询练习.sql","filename_rule":"学号-查询练习.sql","requirements":"给出SQL语句和执行结果。"},
+  {"id":104,"course":"软件测试","title":"测试用例设计","deadline":"2026-10-29","is_submitted":true,"deliverables":"测试用例.xlsx","filename_rule":"学号-测试用例.xlsx","requirements":"覆盖正常与异常输入。"},
+  {"id":105,"course":"软件工程","title":"需求分析练习","deadline":"2026-10-25","is_submitted":false,"deliverables":"需求说明.docx","filename_rule":"学号-需求说明.docx","requirements":"写明功能和验收标准。"}
+]
