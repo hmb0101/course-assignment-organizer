@@ -16,6 +16,7 @@ import urllib.parse
 import urllib.request
 
 import settings
+import grounding
 
 ROOT = Path(__file__).resolve().parent
 FIELD_NAMES = ("course_name", "title", "deadline", "deliverables",
@@ -61,7 +62,10 @@ def cloud_call(messages, env):
     try:
         with urllib.request.urlopen(req, timeout=settings.TIMEOUT) as resp:
             data = json.loads(resp.read(2_000_000).decode("utf-8"))
-        return {"raw":data["choices"][0]["message"]["content"], "usage":data.get("usage", {})}
+        usage = data.get("usage") or {}
+        if not isinstance(usage, dict):
+            raise ValueError("invalid usage")
+        return {"raw":data["choices"][0]["message"]["content"], "usage":usage}
     except urllib.error.HTTPError as exc:
         raise DraftError(f"HTTP_{exc.code}", "模型接口返回错误，原文已保留。") from None
     except (TimeoutError, socket.timeout):
@@ -121,32 +125,42 @@ def make_draft(original, input_kind, env, call=cloud_call):
     result = {"version":settings.VERSION, "model":settings.MODEL, "original":original,
               "input_kind":input_kind, "calls":0, "usage":{}, "trace":[], "error":None,
               "status":"manual", "fields":{}, "deadline_text":"", "uncertain_fields":[],
-              "form_seed":{}, "message":""}
+              "form_seed":{}, "message":"", "evidence":{}, "warnings":{}}
     def mark(stage, **details):
         result["trace"].append({"stage":stage, **details})
     try:
         text = preprocess(original)
         mark("preprocessed", characters=len(text))
-        messages = [{"role":"system", "content":settings.PROMPT},
-                    {"role":"user", "content":json.dumps({"input_kind":input_kind,"notice":text},ensure_ascii=False)}]
-        result["calls"] = 1
-        reply = call(messages, env)
-        result["usage"] = reply["usage"]
-        result["raw_model"] = SECRET.sub("[REDACTED]", str(reply["raw"]))
-        mark("model_returned", usage=result["usage"])
-        obj = validate(reply["raw"])
+        reason = grounding.scope_reason(text,input_kind)
+        if reason:
+            obj = {"kind":"out_of_scope"}
+            mark("scope_rejected", by="preflight", reason=reason)
+        else:
+            messages = [{"role":"system", "content":settings.PROMPT},
+                        {"role":"user", "content":json.dumps({"input_kind":input_kind,"notice":text},ensure_ascii=False)}]
+            result["calls"] = 1
+            reply = call(messages, env)
+            result["usage"] = reply["usage"]
+            result["raw_model"] = SECRET.sub("[REDACTED]", str(reply["raw"]))
+            mark("model_returned", usage=result["usage"])
+            obj = validate(reply["raw"])
         if obj["kind"] == "out_of_scope":
             result.update(status="out_of_scope", message="只支持作业通知文字；不识图、登录或代交。")
-            mark("scope_rejected", by="model")
+            if not reason:
+                mark("scope_rejected", by="model")
         else:
-            fields = obj["fields"]
-            uncertain = [k for k in REQUIRED if not fields[k]]
+            try:
+                fields, evidence, warnings, deadline_text = grounding.check(obj,text)
+            except ValueError as exc:
+                raise DraftError("INVALID_SCHEMA",str(exc)) from None
+            uncertain = list(dict.fromkeys([k for k in REQUIRED if not fields[k]] + list(warnings)))
             seed = {**fields, "deadline":fields["deadline"] or "",
                     "deliverables":"\n".join(fields["deliverables"]), "source_text":original}
             result.update(status="needs_review" if uncertain else "draft", fields=fields,
-                          deadline_text=obj["deadline_text"], uncertain_fields=uncertain, form_seed=seed,
+                          deadline_text=deadline_text, uncertain_fields=uncertain, form_seed=seed,
+                          evidence=evidence, warnings=warnings,
                           message="有待确认字段，请对照原文补齐。" if uncertain else "草稿已生成，请对照原文确认。")
-            mark("validated", uncertain=uncertain)
+            mark("validated", uncertain=uncertain, evidence_fields=list(evidence), warnings=warnings)
     except DraftError as exc:
         if exc.code in {"MISSING_CONFIG","INVALID_CONFIG"}:
             result["calls"] = 0
@@ -207,10 +221,14 @@ def show(result):
     for key, value in result["fields"].items():
         rendered = "、".join(value) if isinstance(value, list) else value
         print(LABELS[key]+"："+(rendered or "待确认"))
+        if key in result.get("evidence", {}):
+            print("  原文依据："+result["evidence"][key])
     if result["deadline_text"]:
         print("截止原文："+result["deadline_text"])
     if result["error"]:
         print("错误类型："+result["error"])
+    if result["warnings"]:
+        print("待核查原因："+json.dumps(result["warnings"],ensure_ascii=False))
 
 def main():
     sys.stdout.reconfigure(encoding="utf-8")
