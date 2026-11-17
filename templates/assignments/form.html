@@ -51,5 +51,5 @@
 </div>
 <div class="form-footer"><span><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg>{% if assignment %}作业保存在本机{% else %}生成草稿会将通知文字发送至通义千问{% endif %}</span><div><a class="button" href="{% if assignment %}{% url 'assignment_detail' assignment.pk %}{% else %}{% url 'assignment_list' %}{% endif %}">取消</a><button type="submit" name="action" value="save" class="button button-primary" data-save-assignment><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>保存作业</button></div></div>
 </form>
-{% if not assignment %}<script src="{% static 'assignment-draft.js' %}" defer></script>{% endif %}
+{% if not assignment %}<script src="{% static 'assignment-draft.js' %}?v=2" defer></script>{% endif %}
 {% endblock %}

@@ -19,23 +19,30 @@ if (draftForm && window.fetch && window.AbortController && window.crypto?.random
   const seeded = new Map();
   let active = null;
   let saving = false;
-  let reviewFields = [];
+  let reviewResult = null;
 
-  function feedbackText(state, text, originalDate = "") {
+  function feedbackText(state, text) {
     feedback.dataset.state = state;
     feedback.hidden = !text;
     message.textContent = text;
-    evidence.textContent = originalDate;
-    evidence.hidden = !originalDate;
   }
 
   function updateReview() {
-    const missing = reviewFields.filter(item => !draftForm.elements.namedItem(item.name)?.value.trim());
+    const reviewing = reviewResult && (feedback.dataset.state === "needs_review" || feedback.dataset.state === "reviewed");
+    const missing = reviewing
+      ? reviewResult.review.filter(item => !draftForm.elements.namedItem(item.name)?.value.trim())
+      : [];
     review.textContent = missing.length ? "待确认：" + missing.map(item => item.label).join("、") : "";
     review.hidden = !missing.length;
     const datePending = missing.some(item => item.name === "deadline");
     deadlineBadge.hidden = !datePending;
     deadlineField.classList.toggle("has-pending-review", datePending);
+    evidence.textContent = datePending ? reviewResult.deadline_text : "";
+    evidence.hidden = !evidence.textContent;
+    if (reviewing) {
+      feedbackText(missing.length ? "needs_review" : "reviewed",
+        missing.length ? reviewResult.message : "待确认字段已填写，请核对后保存。");
+    }
   }
 
   function rememberPending(pending) {
@@ -59,7 +66,7 @@ if (draftForm && window.fetch && window.AbortController && window.crypto?.random
       if (field.value === value) field.value = "";
     }
     seeded.clear();
-    reviewFields = [];
+    reviewResult = null;
     updateReview();
   }
 
@@ -72,6 +79,7 @@ if (draftForm && window.fetch && window.AbortController && window.crypto?.random
     pendingControls(false);
     buttonLabel.textContent = "重新生成";
     feedbackText("cancelled", text);
+    updateReview();
   }
 
   async function generateDraft() {
@@ -86,6 +94,7 @@ if (draftForm && window.fetch && window.AbortController && window.crypto?.random
     rememberPending(true);
     pendingControls(true);
     feedbackText("processing", "正在生成草稿，请稍候。");
+    updateReview();
     try {
       const response = await fetch(draftForm.dataset.draftUrl, {
         method: "POST",
@@ -107,11 +116,10 @@ if (draftForm && window.fetch && window.AbortController && window.crypto?.random
         }
         if (["submission_method", "filename_rule", "content_requirements"]
           .some(name => draftForm.elements.namedItem(name).value)) optional.open = true;
-        reviewFields = result.review;
-        updateReview();
+        reviewResult = result.status === "needs_review" ? result : null;
       }
-      feedbackText(result.status, result.message, result.deadline_text && result.review.some(item => item.name === "deadline")
-        ? result.deadline_text : "");
+      feedbackText(result.status, result.message);
+      updateReview();
     } catch {
       if (active === task) feedbackText("manual", "连接中断。原文已保留，可重试或手工填写。");
     } finally {
@@ -142,7 +150,7 @@ if (draftForm && window.fetch && window.AbortController && window.crypto?.random
       updateReview();
       return;
     }
-    if (!active && !seeded.size && !reviewFields.length) return;
+    if (!active && !seeded.size && !reviewResult) return;
     clearGeneratedFields();
     if (active) stopWaiting("原文已修改，请重新生成草稿。");
     else {

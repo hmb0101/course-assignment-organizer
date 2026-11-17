@@ -108,9 +108,20 @@ async function revised(page, context) {
   assert.equal(await input(page, "title").inputValue(), "人工标题保留");
   assert.equal(await page.locator(".field-pending").isVisible(), true);
   await record(page, "日期待确认");
-  await input(page, "deadline").fill(deadline);
+  const confirmedDeadline = dateAfter(9);
+  await input(page, "deadline").fill(confirmedDeadline);
+  await status(page, "reviewed");
+  assert.match(await feedback(page).innerText(), /已填写，请核对后保存/);
+  assert.equal(await page.locator("[data-draft-evidence]").isVisible(), false);
   assert.equal(await page.locator(".field-pending").isVisible(), false);
-  report("T03", "冲突日期留空，待确认提示随人工填写消失");
+  await input(page, "deadline").fill("");
+  await status(page, "needs_review");
+  assert.equal(await page.locator(".field-pending").isVisible(), true);
+  assert.equal(await page.locator("[data-draft-evidence]").isVisible(), true);
+  await input(page, "deadline").fill(confirmedDeadline);
+  await checkSaved(page, "人工标题保留");
+  assert.match(await page.locator(".summary-date").innerText(), new RegExp(chineseDate(confirmedDeadline)));
+  report("T03", "填写日期后切换提示，清空时恢复待确认，确认值保存后可查");
 
   await page.goto(formURL);
   const failed = notice("手工录入示例", "模拟超时");

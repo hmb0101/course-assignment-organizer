@@ -6,7 +6,7 @@
 .draft-feedback p{margin:3px 0 0;font-size:12px}
 .draft-feedback-draft{background:var(--green-soft);border-color:#cfdfd7;color:var(--green)}
 .draft-feedback[data-state="processing"],.draft-feedback[data-state="cancelled"]{background:#f5f6f7;border-color:var(--line);color:var(--body)}
-.draft-feedback[data-state="draft"]{background:var(--green-soft);border-color:#cfdfd7;color:var(--green)}
+.draft-feedback[data-state="draft"],.draft-feedback[data-state="reviewed"]{background:var(--green-soft);border-color:#cfdfd7;color:var(--green)}
 .assignment-form [hidden]{display:none}
 .assignment-form button:disabled{opacity:.55;cursor:wait}
 .field-pending{color:#824713;font-size:11px;margin-left:auto;white-space:nowrap}
