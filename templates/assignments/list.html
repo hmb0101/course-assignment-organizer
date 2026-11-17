@@ -1,17 +1,57 @@
 {% extends 'base.html' %}
-{% block title %}作业列表{% endblock %}
+{% block title %}我的作业{% endblock %}
+{% block page_class %}assignment-desk-page{% endblock %}
 {% block content %}
-<section class="page-heading"><div><p class="eyebrow">基础功能版本</p><h1>我的课程作业</h1><p>集中查看截止时间、提交物和任务步骤。</p></div><a class="button primary" href="{% url 'assignment_create' %}">+ 新建作业</a></section>
-{% if assignments %}
-<div class="card-list">
-    {% for assignment in assignments %}
-    <article class="card">
-        <div><span class="course">{{ assignment.course_name }}</span><h2>{{ assignment.title }}</h2><p>截止时间：{{ assignment.deadline|date:'Y-m-d' }}</p><p>提交物：{{ assignment.deliverables|truncatechars:60 }}</p></div>
-        <div class="card-actions"><span>{{ assignment.steps.all|length }} 个步骤</span><a href="{% url 'assignment_detail' assignment.pk %}">查看详情 →</a></div>
-    </article>
-    {% endfor %}
+<div class="page-heading desk-heading">
+  <h1>我的作业</h1>
+  <div class="desk-actions">
+    <form class="search-form" method="get" role="search">
+      <input type="hidden" name="status" value="{{ filters.status }}"><input type="hidden" name="course" value="{{ filters.course }}"><input type="hidden" name="month" value="{{ filters.month }}"><input type="hidden" name="day" value="{{ filters.day }}">
+      <label class="sr-only" for="assignment-search">搜索作业或课程</label><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>
+      <input id="assignment-search" type="search" name="q" placeholder="搜索作业或课程" value="{{ filters.q }}"><kbd class="search-shortcut" aria-hidden="true">/</kbd>
+      <button type="submit" class="search-submit" aria-label="搜索"><svg class="icon" aria-hidden="true"><use href="#i-arrow-right"/></svg></button>
+    </form>
+    <a class="button button-primary" href="{% url 'assignment_create' %}"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>新增作业</a>
+  </div>
 </div>
-{% else %}
-<section class="empty"><h2>还没有作业</h2><p>点击“新建作业”录入第一条课程任务。</p><a class="button primary" href="{% url 'assignment_create' %}">新建作业</a></section>
-{% endif %}
+<div class="assignment-desk">
+  <section class="assignment-region" aria-label="作业列表">
+    <div class="list-toolbar">
+      <nav class="tabs" aria-label="作业状态">
+        <a class="{% if filters.status == 'all' %}is-active{% endif %}" href="{% querystring status='all' %}"{% if filters.status == 'all' %} aria-current="page"{% endif %}>全部<span>{{ tab_all_count }}</span></a>
+        <a class="{% if filters.status == 'active' %}is-active{% endif %}" href="{% querystring status='active' %}"{% if filters.status == 'active' %} aria-current="page"{% endif %}>待提交<span>{{ tab_active_count }}</span></a>
+        <a class="{% if filters.status == 'done' %}is-active{% endif %}" href="{% querystring status='done' %}"{% if filters.status == 'done' %} aria-current="page"{% endif %}>已提交<span>{{ tab_done_count }}</span></a>
+      </nav>
+      <span class="list-order">截止日期排序<svg class="icon" aria-hidden="true"><use href="#i-sort"/></svg></span>
+    </div>
+    {% if selected_day %}<div class="date-filter"><span><svg class="icon" aria-hidden="true"><use href="#i-calendar"/></svg>{{ selected_day|date:"n月j日" }}截止<span class="filter-count">{{ tab_all_count }} 份作业</span></span><a href="{{ clear_day_url }}" aria-label="取消日期筛选">取消<svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></a></div>{% endif %}
+    {% if filters.course or filters.q %}<div class="filter-summary"><span>{% if filters.course %}{{ filters.course }}{% endif %}{% if filters.course and filters.q %} · {% endif %}{% if filters.q %}“{{ filters.q }}”{% endif %}</span><a href="{% querystring course=None q=None %}">清除筛选<svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></a></div>{% endif %}
+    <div class="table-head" aria-hidden="true"><span>作业名称</span><span>截止日期</span><span>状态</span><span></span></div>
+    <div class="assignment-rows">
+      {% for item in assignments %}
+      <a class="assignment-row due-{{ item.deadline_state }}{% if item.is_submitted %} is-submitted{% endif %}" href="{% url 'assignment_detail' item.pk %}" aria-label="查看 {{ item.title }} 的要求与提交信息">
+        <div class="row-subject"><span class="row-icon"><svg class="icon" aria-hidden="true"><use href="{% if item.is_submitted %}#i-document-done{% else %}#i-document{% endif %}"/></svg></span><div><h2>{{ item.title }}</h2><div class="row-meta"><span>{{ item.course_name }}</span></div></div></div>
+        <div class="row-deadline" title="{{ item.deadline|date:'Y年n月j日' }}截止"><span class="deadline-badge {{ item.deadline_state }}">{% if item.is_submitted %}{{ item.deadline|date:"n月j日" }}{% else %}{{ item.deadline_text }}{% endif %}</span><small>{% if item.is_submitted %}<span class="desktop-year">{{ item.deadline|date:"Y年" }}</span><span class="compact-submitted">已提交</span>{% else %}{{ item.deadline|date:"n月j日" }}{% endif %}</small></div>
+        <div class="row-status"><span class="status-badge {% if item.is_submitted %}submitted{% else %}pending{% endif %}">{% if item.is_submitted %}<svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>已提交{% else %}待提交{% endif %}</span></div>
+        <span class="row-open" aria-hidden="true"><svg class="icon"><use href="#i-chevron-right"/></svg></span>
+      </a>
+      {% empty %}
+      <div class="empty-state"><svg class="empty-icon" aria-hidden="true"><use href="#i-inbox"/></svg><h2>{% if selected_day %}这一天没有匹配的作业{% elif assignment_total %}没有匹配的作业{% else %}暂无作业{% endif %}</h2><p>{% if selected_day %}可以选择其他日期，或取消日期筛选。{% elif assignment_total %}请调整关键词、课程或状态。{% else %}点击“新增作业”添加记录。{% endif %}</p><a class="button" href="{% if selected_day %}{{ clear_day_url }}{% elif assignment_total %}{% url 'assignment_list' %}{% else %}{% url 'assignment_create' %}{% endif %}">{% if selected_day %}取消日期筛选{% elif assignment_total %}查看全部{% else %}新增作业{% endif %}</a></div>
+      {% endfor %}
+    </div>
+    <div class="list-footer"><span>共 {{ assignments|length }} 份作业</span></div>
+  </section>
+  <aside class="calendar-rail" aria-label="截止日历">
+    <details class="deadline-calendar" open data-calendar data-selected-day="{% if selected_day %}yes{% else %}no{% endif %}">
+      <summary><span>截止日历</span><span class="calendar-summary-month">{{ calendar_month_label }}</span><svg class="icon" aria-hidden="true"><use href="#i-chevron-down"/></svg></summary>
+      <div class="calendar-body">
+        <div class="calendar-heading"><h2>{{ calendar_month_label }}</h2><div class="calendar-controls">{% if previous_month_url %}<a href="{{ previous_month_url }}" class="calendar-nav previous" aria-label="上个月"><svg class="icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></a>{% else %}<span class="calendar-nav previous is-disabled" aria-hidden="true"><svg class="icon"><use href="#i-chevron-right"/></svg></span>{% endif %}<a class="calendar-today" href="{{ today_url }}">今天</a>{% if next_month_url %}<a href="{{ next_month_url }}" class="calendar-nav next" aria-label="下个月"><svg class="icon" aria-hidden="true"><use href="#i-chevron-right"/></svg></a>{% else %}<span class="calendar-nav next is-disabled" aria-hidden="true"><svg class="icon"><use href="#i-chevron-right"/></svg></span>{% endif %}</div></div>
+        <table class="month-grid" aria-label="{{ calendar_month_label }}作业截止日期"><thead><tr><th scope="col">一</th><th scope="col">二</th><th scope="col">三</th><th scope="col">四</th><th scope="col">五</th><th scope="col">六</th><th scope="col">日</th></tr></thead><tbody>{% for week in calendar_weeks %}<tr>{% for day in week %}<td><a{% if day.url %} href="{{ day.url }}"{% else %} aria-disabled="true" tabindex="-1"{% endif %} class="calendar-day {% if not day.in_month %}outside{% endif %}{% if day.is_today %} is-today{% endif %}{% if day.is_selected %} is-selected{% endif %}{% if day.total %} has-deadline state-{{ day.state }}{% endif %}" aria-label="{{ day.label }}" title="{{ day.label }}"{% if day.is_selected %} aria-current="date"{% endif %}><span class="day-number">{{ day.day }}</span>{% if day.total %}<span class="day-marker" aria-hidden="true">{% if day.total > 1 %}{{ day.total }}{% endif %}</span>{% endif %}</a></td>{% endfor %}</tr>{% endfor %}</tbody></table>
+        <div class="calendar-legend"><span><i class="legend-pending"></i>待提交</span><span><i class="legend-urgent"></i>临近截止</span><span><i class="legend-done"></i>已提交</span></div>
+        <div class="calendar-month-total"><span>本月{% if filters.q or filters.course or filters.status != 'all' %}筛选结果{% endif %}</span><span>{{ calendar_pending_count }} 份待交 · {{ calendar_submitted_count }} 份已交</span></div>
+        <p class="calendar-hint">点选日期，查看当天截止的作业。</p>
+      </div>
+    </details>
+  </aside>
+</div>
 {% endblock %}

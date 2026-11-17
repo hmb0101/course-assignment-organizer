@@ -5,12 +5,6 @@ from .models import Assignment
 
 
 class AssignmentForm(forms.ModelForm):
-    steps = forms.CharField(
-        label="任务步骤",
-        widget=forms.Textarea(attrs={"rows": 5, "placeholder": "每行填写一个步骤"}),
-        help_text="每行填写一个步骤。",
-    )
-
     class Meta:
         model = Assignment
         fields = [
@@ -18,35 +12,28 @@ class AssignmentForm(forms.ModelForm):
             "title",
             "deadline",
             "deliverables",
+            "submission_method",
             "filename_rule",
+            "content_requirements",
             "source_text",
         ]
         widgets = {
-            "deadline": forms.DateInput(attrs={"type": "date"}),
-            "deliverables": forms.Textarea(attrs={"rows": 3}),
-            "source_text": forms.Textarea(attrs={"rows": 5}),
+            "deadline": forms.DateInput(format="%Y-%m-%d", attrs={"type": "date"}),
+            "course_name": forms.TextInput(attrs={"placeholder": "例如：软件应用开发实践"}),
+            "title": forms.TextInput(attrs={"placeholder": "填写作业或实验名称"}),
+            "filename_rule": forms.TextInput(attrs={"placeholder": "例如：学号-姓名-实验名称.pdf"}),
+            "submission_method": forms.TextInput(attrs={"placeholder": "例如：学习通对应作业入口"}),
+            "deliverables": forms.Textarea(attrs={"rows": 2, "placeholder": "需要提交哪些文件？"}),
+            "content_requirements": forms.Textarea(attrs={"rows": 5, "placeholder": "记录报告内容、小问、格式等要求，无需拆分任务步骤。"}),
+            "source_text": forms.Textarea(attrs={"rows": 15, "placeholder": "在这里粘贴老师发布的作业要求。\n\n建议保留：\n截止时间、提交方式、文件格式、命名规则和评分要求。"}),
         }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if self.instance.pk:
-            self.fields["steps"].initial = "\n".join(
-                self.instance.steps.values_list("title", flat=True)
-            )
 
     def clean_deadline(self):
         deadline = self.cleaned_data["deadline"]
-        if deadline < timezone.localdate():
+        unchanged_existing = self.instance.pk and deadline == self.instance.deadline
+        if deadline < timezone.localdate() and not unchanged_existing:
             raise forms.ValidationError("截止时间不能早于今天。")
         return deadline
-
-    def clean_steps(self):
-        lines = [line.strip() for line in self.cleaned_data["steps"].splitlines() if line.strip()]
-        if not lines:
-            raise forms.ValidationError("至少填写一个任务步骤。")
-        if len(lines) != len(set(lines)):
-            raise forms.ValidationError("任务步骤不能重复。")
-        return "\n".join(lines)
 
     def clean(self):
         cleaned = super().clean()

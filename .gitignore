@@ -10,6 +10,7 @@ screenshots/
 .test-results/
 .edge-*/
 .chrome-*/
+.ui-preview/
 .idea/
 .vscode/
 

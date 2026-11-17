@@ -8,6 +8,7 @@ LOG_DIR.mkdir(exist_ok=True)
 
 SECRET_KEY = "development-only-secret-key"
 DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"
+UI_DEMO = os.getenv("UI_DEMO", "0") == "1"
 ALLOWED_HOSTS = ["127.0.0.1", "localhost", "testserver"]
 
 INSTALLED_APPS = [
@@ -42,6 +43,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "assignments.context_processors.workspace_context",
             ],
         },
     }
@@ -52,7 +54,7 @@ WSGI_APPLICATION = "config.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "NAME": os.getenv("DJANGO_DB_PATH") or BASE_DIR / "db.sqlite3",
     }
 }
 

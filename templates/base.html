@@ -2,22 +2,46 @@
 <!doctype html>
 <html lang="zh-CN">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{% block title %}课程作业要求智能整理系统{% endblock %}</title>
-    <link rel="stylesheet" href="{% static 'app.css' %}">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}我的作业{% endblock %} · 课程作业</title>
+  <link rel="icon" href="{% static 'favicon.svg' %}" type="image/svg+xml">
+  <link rel="stylesheet" href="{% static 'app.css' %}?v=7">
+  <script src="{% static 'app.js' %}?v=6" defer></script>
 </head>
 <body>
-<header class="site-header">
-    <div class="container header-inner">
-        <a class="brand" href="{% url 'assignment_list' %}">课程作业要求智能整理系统</a>
-        <nav><a href="{% url 'assignment_list' %}">作业列表</a><a class="button" href="{% url 'assignment_create' %}">新建作业</a></nav>
+{% include 'components/icons.html' %}
+<div class="app-shell">
+  <aside class="sidebar" aria-label="主导航">
+    <a class="brand" href="{% url 'assignment_list' %}" aria-label="课程作业首页">
+      <svg class="brand-icon" viewBox="0 0 36 36" fill="none" aria-hidden="true"><rect x=".75" y=".75" width="34.5" height="34.5" rx="9" fill="#e9eee2" stroke="#dce3d3"/><path d="M11 9.5h10l5 5v12H11z" fill="#fffefa" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round"/><path d="M21 9.5v5h5M7.5 13v16.5H21" stroke="currentColor" stroke-width="1.35" stroke-linejoin="round" stroke-linecap="round"/><path d="m14.5 20 2.1 2.1 4.9-4.9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>课程作业<small>作业管理</small></span>
+    </a>
+    <nav class="main-nav">
+      <a class="nav-item {% if request.resolver_match.url_name == 'assignment_list' %}is-active{% endif %}" href="{% url 'assignment_list' %}"><svg class="icon"><use href="#i-inbox"/></svg><span>我的作业</span><small>{{ sidebar_active_count|default:0 }}</small></a>
+      <a class="nav-item {% if request.resolver_match.url_name == 'assignment_create' %}is-active{% endif %}" href="{% url 'assignment_create' %}"><svg class="icon"><use href="#i-file-plus"/></svg><span>新增作业</span></a>
+      {% if rag_configured %}<a class="nav-item {% if request.resolver_match.url_name == 'requirements_qa' %}is-active{% endif %}" href="{% url 'requirements_qa' %}"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg><span>要求核对</span></a>{% endif %}
+    </nav>
+    <div class="sidebar-section-label">课程</div>
+    <nav class="course-nav" aria-label="按课程查看">
+      {% for item in sidebar_courses %}
+      <a href="{% url 'assignment_list' %}?course={{ item.name|urlencode }}" class="course-link {% if filters.course == item.name %}is-selected{% endif %}"><span class="course-marker"></span><span>{{ item.name }}</span><small>{{ item.count }}</small></a>
+      {% empty %}<span class="sidebar-hint">暂无课程</span>{% endfor %}
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="storage-state"><span></span>已保存在本机</div>
+      <div class="profile"><span class="avatar">潘</span><span><strong>潘书成</strong><small>软件工程 · 个人空间</small></span></div>
     </div>
-</header>
-<main class="container">
-    {% for message in messages %}<div class="message">{{ message }}</div>{% endfor %}
-    {% block content %}{% endblock %}
-</main>
+  </aside>
+  <div class="app-main">
+    <header class="topbar"><div class="topbar-location"><svg class="icon"><use href="#i-layout"/></svg><a href="{% url 'assignment_list' %}">工作区</a><span class="breadcrumb-slash">/</span><span>{% block location %}我的作业{% endblock %}</span></div><div class="topbar-date"><svg class="icon"><use href="#i-calendar"/></svg><span>{{ current_date|date:"Y年n月j日" }}</span>{% if ui_demo %}<span class="demo-label">演示数据</span>{% endif %}</div></header>
+    <main class="page-content {% block page_class %}{% endblock %}">
+      {% for message in messages %}<div class="toast" role="status"><svg class="icon"><use href="#i-check"/></svg>{{ message }}</div>{% endfor %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+<div class="sr-only" id="interaction-status" role="status" aria-live="polite"></div>
+<dialog id="delete-dialog" class="confirm-dialog"><h2>删除这条作业？</h2><p>这条作业及其保存的要求将被删除，此操作无法撤销。</p><div class="dialog-actions"><button type="button" class="button" data-dialog-cancel>保留作业</button><button type="button" class="button button-danger" data-dialog-confirm>确认删除</button></div></dialog>
 </body>
 </html>
-

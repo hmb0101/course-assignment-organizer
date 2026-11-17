@@ -15,8 +15,11 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-import settings
-import grounding
+if __package__:
+    from . import grounding, settings
+else:
+    import grounding
+    import settings
 
 ROOT = Path(__file__).resolve().parent
 FIELD_NAMES = ("course_name", "title", "deadline", "deliverables",

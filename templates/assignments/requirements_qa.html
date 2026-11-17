@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}要求核对{% endblock %}
+{% block location %}要求核对{% endblock %}
+{% block content %}
+<link rel="stylesheet" href="{% static 'requirements-qa.css' %}">
+<div class="page-heading form-page-heading"><div><h1>要求核对</h1></div></div>
+<form class="qa-form" method="post">
+  {% csrf_token %}
+  <label for="qa-question">作业要求有什么疑问？</label>
+  <div class="qa-input">
+    <input id="qa-question" name="question" type="text" value="{{ question }}" maxlength="1000" required placeholder="例如：实验4在学习通要提交什么文件？">
+    <button class="button button-primary" type="submit" name="action" value="ask"><svg class="icon" aria-hidden="true"><use href="#i-search"/></svg>查找答案</button>
+  </div>
+  <button class="qa-retrieve" type="submit" name="action" value="retrieve">仅查看检索结果</button>
+</form>
+{% if error %}<p class="form-alert" role="alert">{{ error }}</p>{% endif %}
+{% if result %}
+<div class="qa-result">
+  <section aria-labelledby="qa-answer">
+    <h2 id="qa-answer">回答</h2>
+    <p class="qa-answer">{{ result.output.answer }}</p>
+    {% if result.output.follow_up %}<p>{{ result.output.follow_up }}</p>{% endif %}
+    {% if result.calls %}<p class="qa-meta">{{ result.model }} · {{ result.total_ms|floatformat:0 }} ms</p>{% endif %}
+  </section>
+  <section aria-labelledby="qa-sources">
+    <h2 id="qa-sources">原文出处</h2>
+    {% for item in citations %}
+      <article class="qa-source">
+        <h3><span>{{ item.source_id }}</span> {{ item.section }}</h3>
+        <p class="qa-meta">{{ item.source }}</p>
+        <blockquote>{{ item.quote }}</blockquote>
+      </article>
+    {% empty %}<p class="qa-meta">暂无可引用的资料。</p>{% endfor %}
+  </section>
+</div>
+{% if result.calls %}
+<details class="qa-diagnostics">
+  <summary>模型调用详情</summary>
+  <p>POST /chat/completions · {{ result.model }} · Prompt V{{ result.prompt_version }}</p>
+  <p>温度 {{ result.parameters.temperature }} · 输出上限 {{ result.parameters.max_tokens }} Token · 输入 {{ result.usage.prompt_tokens }} Token · 输出 {{ result.usage.completion_tokens }} Token</p>
+  <pre>{{ result.raw_output }}</pre>
+</details>
+{% endif %}
+{% endif %}
+{% if retrieved %}
+<section class="qa-retrieval">
+  <h2>检索结果</h2>
+  {% for hit in hits %}
+  <article class="qa-source">
+    <h3><span>S{{ forloop.counter }}</span> {{ hit.section }}</h3>
+    <p class="qa-meta">{{ hit.source }} · {{ hit.chunk_id }} · 得分 {{ hit.score|floatformat:4 }} · 覆盖率 {{ hit.coverage|floatformat:2 }} · 匹配词 {{ hit.matched_terms|join:"、" }}</p>
+    <blockquote>{{ hit.text }}</blockquote>
+  </article>
+  {% empty %}<p class="qa-meta">未找到相关资料，可补充实验编号或关键词。</p>{% endfor %}
+</section>
+{% endif %}
+{% endblock %}
