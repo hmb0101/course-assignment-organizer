@@ -5,6 +5,10 @@
 .draft-feedback strong{font-weight:600}
 .draft-feedback p{margin:3px 0 0;font-size:12px}
 .draft-feedback-draft{background:var(--green-soft);border-color:#cfdfd7;color:var(--green)}
+.draft-feedback[data-state="processing"],.draft-feedback[data-state="cancelled"]{background:#f5f6f7;border-color:var(--line);color:var(--body)}
+.draft-feedback[data-state="draft"]{background:var(--green-soft);border-color:#cfdfd7;color:var(--green)}
+.assignment-form [hidden]{display:none}
+.assignment-form button:disabled{opacity:.55;cursor:wait}
 .field-pending{color:#824713;font-size:11px;margin-left:auto;white-space:nowrap}
 .field.has-pending-review input{border-color:#b77d43;background:#fffcf7}
 :root{--ink:#20272b;--body:#394148;--muted:#626c73;--quiet:#7b858d;--line:#e5e8eb;--line-strong:#cbd2d7;--sidebar:#f5f6f7;--paper:#fff;--green:#286454;--green-soft:#e9f3ef;--amber:#a54e0b;--red:#b83d37;font-family:"Microsoft YaHei","PingFang SC","Segoe UI",sans-serif;color:var(--body);font-size:14px;font-synthesis:none}

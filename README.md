@@ -41,6 +41,8 @@ python manage.py test
 3. 用户确认或修改关键信息。
 4. 系统保存作业记录和内容要求，由用户维护提交状态。
 
+等待、取消、重试及浏览器复测见[实验八集成说明](docs/experiment8/README.md)。
+
 ## MVP计划范围
 
 实验五的“要求核对”使用单独的本地 RAG 模块。启动 Django 前，将 `ASSIGNMENT_RAG_DIR` 指向包含 `rag.py`、`kb/` 和本地 `.env` 的模块目录，左侧导航即可进入问答。点击“仅查看检索结果”只做本地检索。

@@ -1,9 +1,10 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block title %}{% if assignment %}编辑作业{% else %}新增作业{% endif %}{% endblock %}
 {% block location %}{% if assignment %}编辑作业{% else %}新增作业{% endif %}{% endblock %}
 {% block content %}
 <div class="page-heading form-page-heading"><div><h1>{% if assignment %}编辑作业{% else %}新增作业{% endif %}</h1></div><a class="back-link" href="{% if assignment %}{% url 'assignment_detail' assignment.pk %}{% else %}{% url 'assignment_list' %}{% endif %}"><svg class="icon" aria-hidden="true"><use href="#i-arrow-left"/></svg>返回</a></div>
-<form method="post" class="assignment-form" novalidate>
+<form method="post" class="assignment-form" novalidate{% if not assignment %} data-draft-url="{% url 'assignment_draft' %}"{% endif %}>
 {% csrf_token %}
 {% if not assignment %}<button type="submit" name="action" value="save" hidden>保存作业</button>{% endif %}
 {% if form.errors %}<div class="form-alert" role="alert"><svg class="icon" aria-hidden="true"><use href="#i-info"/></svg><div><strong>请检查填写的信息</strong>{% for error in form.non_field_errors %}<p>{{ error }}</p>{% empty %}<p>标注的字段需要补充或修改。</p>{% endfor %}</div></div>{% endif %}
@@ -15,11 +16,21 @@
     {{ form.source_text }}
     {% for error in form.source_text.errors %}<div class="field-error">{{ error }}</div>{% endfor %}
     <div class="source-editor-foot">
-      {% if not assignment %}<button class="button draft-button" type="submit" name="action" value="draft"><svg class="icon" aria-hidden="true"><use href="#i-list-check"/></svg>生成草稿</button>{% endif %}
+      {% if not assignment %}
+      <button class="button draft-button" type="submit" name="action" value="draft" data-draft-generate><svg class="icon" aria-hidden="true"><use href="#i-list-check"/></svg><span>生成草稿</span></button>
+      <button class="button" type="button" data-draft-cancel hidden>取消等待</button>
+      <button class="button" type="button" data-draft-discard hidden>放弃草稿</button>
+      {% endif %}
       <output id="source-char-count" for="{{ form.source_text.id_for_label }}" aria-label="原文字数">0 字</output>
     </div>
   </section>
   <section class="fields-editor"><div class="section-heading"><h2>作业信息</h2><span>标有 <b class="required-mark">*</b> 为必填</span></div>
+    {% if not assignment %}
+    <div class="draft-feedback" data-draft-feedback role="status" aria-atomic="true" hidden>
+      <svg class="icon" aria-hidden="true"><use href="#i-info"/></svg>
+      <div><strong data-draft-message></strong><p data-draft-review hidden></p><p data-draft-evidence hidden></p></div>
+    </div>
+    {% endif %}
     {% if draft_result %}
     <div class="draft-feedback draft-feedback-{{ draft_result.status }}" role="status">
       <svg class="icon" aria-hidden="true"><use href="{% if draft_result.status == 'draft' %}#i-check{% else %}#i-info{% endif %}"/></svg>
@@ -38,6 +49,7 @@
     </details>
   </section>
 </div>
-<div class="form-footer"><span><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg>{% if assignment %}作业保存在本机{% else %}生成草稿会将通知文字发送至通义千问{% endif %}</span><div><a class="button" href="{% if assignment %}{% url 'assignment_detail' assignment.pk %}{% else %}{% url 'assignment_list' %}{% endif %}">取消</a><button type="submit" name="action" value="save" class="button button-primary"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>保存作业</button></div></div>
+<div class="form-footer"><span><svg class="icon" aria-hidden="true"><use href="#i-lock"/></svg>{% if assignment %}作业保存在本机{% else %}生成草稿会将通知文字发送至通义千问{% endif %}</span><div><a class="button" href="{% if assignment %}{% url 'assignment_detail' assignment.pk %}{% else %}{% url 'assignment_list' %}{% endif %}">取消</a><button type="submit" name="action" value="save" class="button button-primary" data-save-assignment><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg>保存作业</button></div></div>
 </form>
+{% if not assignment %}<script src="{% static 'assignment-draft.js' %}" defer></script>{% endif %}
 {% endblock %}

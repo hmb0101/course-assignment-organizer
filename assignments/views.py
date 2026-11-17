@@ -6,9 +6,11 @@ from collections import defaultdict
 from datetime import date, timedelta
 from pathlib import Path
 from urllib.parse import urlencode
+from uuid import UUID, uuid4
 
 from django.contrib import messages
-from django.http import HttpResponseBadRequest
+from django.db import IntegrityError
+from django.http import HttpResponseBadRequest, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -160,20 +162,48 @@ def assignment_list(request):
     return render(request, "assignments/list.html", context)
 
 
+def _generate_draft(original, task_id):
+    env = Path(os.environ.get("ASSIGNMENT_AI_ENV", draft.ROOT / ".env"))
+    result = draft.make_draft(original, "text", env)
+    logger.info(
+        "assignment_draft task=%s status=%s error=%s calls=%d elapsed_ms=%s",
+        task_id, result["status"], result["error"], result["calls"], result["elapsed_ms"],
+    )
+    return result
+
+
+@require_POST
+def assignment_draft(request):
+    task_id = request.POST.get("task_id", "")
+    try:
+        if str(UUID(task_id)) != task_id:
+            raise ValueError
+    except ValueError:
+        return JsonResponse({"message": "任务编号无效，请重新生成。"}, status=400)
+
+    result = _generate_draft(request.POST.get("source_text", ""), task_id)
+    return JsonResponse({
+        "task_id": task_id,
+        "status": result["status"],
+        "message": result["message"],
+        "fields": {name: value for name, value in result["form_seed"].items() if name in draft.FIELD_NAMES},
+        "review": [
+            {"name": name, "label": draft.LABELS[name]}
+            for name in result["uncertain_fields"] if name in draft.LABELS
+        ],
+        "deadline_text": result["deadline_text"],
+    })
+
+
 def assignment_create(request):
     if request.method == "POST" and request.POST.get("action") == "draft":
         original = request.POST.get("source_text", "")
-        env = Path(os.environ.get("ASSIGNMENT_AI_ENV", draft.ROOT / ".env"))
-        result = draft.make_draft(original, "text", env)
+        result = _generate_draft(original, uuid4())
         initial = {name: request.POST.get(name, "") for name in AssignmentForm.Meta.fields}
         for name, value in result["form_seed"].items():
             if not initial[name].strip():
                 initial[name] = value
         review = [draft.LABELS[name] for name in result["uncertain_fields"] if name in draft.LABELS]
-        logger.info(
-            "assignment_draft status=%s error=%s calls=%d elapsed_ms=%s",
-            result["status"], result["error"], result["calls"], result["elapsed_ms"],
-        )
         return render(request, "assignments/form.html", {
             "form": AssignmentForm(initial=initial),
             "draft_result": result,
@@ -182,10 +212,17 @@ def assignment_create(request):
         })
     form = AssignmentForm(request.POST if request.method == "POST" else None)
     if request.method == "POST" and form.is_valid():
-        assignment = create_assignment(form.cleaned_data.copy())
-        logger.info("assignment_created id=%s title=%s", assignment.pk, assignment.title)
-        messages.success(request, "作业已保存。")
-        return redirect("assignment_detail", pk=assignment.pk)
+        try:
+            assignment = create_assignment(form.cleaned_data)
+        except IntegrityError:
+            identity = {name: form.cleaned_data[name] for name in ("course_name", "title", "deadline")}
+            if not Assignment.objects.filter(**identity).exists():
+                raise
+            form.add_error(None, "同一课程、作业名称和截止时间的记录已存在。")
+        else:
+            logger.info("assignment_created id=%s title=%s", assignment.pk, assignment.title)
+            messages.success(request, "作业已保存。")
+            return redirect("assignment_detail", pk=assignment.pk)
     return render(request, "assignments/form.html", {"form": form})
 
 
